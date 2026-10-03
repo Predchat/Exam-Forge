@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0f0f0f">
+<title>Payment Confirmed - ExamForge</title>
+<style>
+:root{--bg:#0f0f0f;--s1:#1a1a1a;--tx:#f0ede8;--tx2:#a8a49e;--tx3:#6b6860;--ac:#e8c97a;--gn:#6fcf97;--gnb:rgba(111,207,151,.1);--gnbd:rgba(111,207,151,.4);}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);color:var(--tx);}
+body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px;}
+.container{max-width:400px;text-align:center;}
+.success-icon{font-size:60px;margin-bottom:20px;animation:bounce 0.6s ease;}
+@keyframes bounce{0%{transform:scale(0.5);opacity:0;}50%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
+h1{font-size:24px;font-weight:700;margin-bottom:10px;color:var(--gn);}
+.message{font-size:14px;color:var(--tx2);line-height:1.6;margin-bottom:20px;}
+.loader{display:inline-block;width:30px;height:30px;border:3px solid var(--s1);border-top-color:var(--ac);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:15px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.details{background:var(--s1);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:15px;margin:20px 0;text-align:left;}
+.detail-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.05);}
+.detail-row:last-child{border-bottom:none;}
+.label{color:var(--tx3);}
+.value{color:var(--tx);font-weight:600;}
+.error{background:rgba(235,87,87,0.1);border:1px solid rgba(235,87,87,0.4);color:#eb5757;padding:12px;border-radius:8px;margin-bottom:15px;font-size:13px;}
+.success-box{background:var(--gnb);border:1px solid var(--gnbd);border-radius:8px;padding:15px;margin-bottom:15px;color:var(--gn);}
+.redirect-msg{font-size:12px;color:var(--tx3);margin-top:15px;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="success-icon">✅</div>
+  <h1>Payment Confirmed!</h1>
+  
+  <div id="content">
+    <div class="loader"></div>
+    <p class="message">Processing your order and saving to our system...</p>
+    <p class="message" style="font-size:12px;color:var(--tx3);">Do not close this page. You will be redirected automatically.</p>
+  </div>
+
+  <div id="error" class="error" style="display:none;"></div>
+</div>
+
+<script>
+  // Get pending payment info from localStorage
+  const pendingPayment = JSON.parse(localStorage.getItem('ef4_pendingPayment') || 'null');
+  
+  async function processPayment() {
+    try {
+      if (!pendingPayment) {
+        throw new Error('No payment information found. Please start over.');
+      }
+
+      // Call backend to save order
+      // Get backend URL from app (it's saved in a separate storage)
+      let backendUrl = localStorage.getItem('ef4_backend_url');
+      if (!backendUrl) {
+        // Fallback: use a placeholder that user must update
+        backendUrl = 'https://YOUR-BACKEND-URL';
+      }
+      
+      const response = await fetch(backendUrl + '/api/order', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          whatsapp: pendingPayment.whatsapp,
+          pack: pendingPayment.pack,
+          deviceFp: pendingPayment.deviceFp
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!data.ok) {
+        throw new Error(data.msg || 'Failed to save order');
+      }
+
+      // Clear pending payment
+      localStorage.removeItem('ef4_pendingPayment');
+
+      // Show success
+      document.getElementById('content').innerHTML = `
+        <div class="success-box">
+          <strong>✅ Payment Received!</strong>
+          <p style="margin-top:8px;font-size:13px;">Your order has been confirmed.</p>
+        </div>
+        <div class="details">
+          <div class="detail-row">
+            <span class="label">WhatsApp:</span>
+            <span class="value">${pendingPayment.whatsapp}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Pack:</span>
+            <span class="value">${pendingPayment.pack.charAt(0).toUpperCase() + pendingPayment.pack.slice(1)}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Status:</span>
+            <span class="value" style="color:var(--gn);">✓ Confirmed</span>
+          </div>
+        </div>
+        <p class="message">Your access code will arrive on WhatsApp <strong>${pendingPayment.whatsapp}</strong> within 5 minutes.</p>
+        <p class="message" style="font-size:12px;color:var(--tx3);">Redirecting to app in 3 seconds...</p>
+      `;
+
+      // Redirect after 3 seconds
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error:', error);
+      document.getElementById('content').style.display = 'none';
+      document.getElementById('error').textContent = '❌ ' + error.message;
+      document.getElementById('error').style.display = 'block';
+    }
+  }
+
+  // Start processing
+  processPayment();
+</script>
+</body>
+</html>

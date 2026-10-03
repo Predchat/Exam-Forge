@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ExamForge">
+<title>ExamForge</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root{
+  --bg:#0f0f0f;--s1:#1a1a1a;--s2:#222;--s3:#2a2a2a;
+  --bd:rgba(255,255,255,.09);--bd2:rgba(255,255,255,.15);
+  --tx:#f0ede8;--tx2:#a8a49e;--tx3:#6b6860;
+  --ac:#e8c97a;--ac2:#c4a85a;--acb:rgba(232,201,122,.1);--acb2:rgba(232,201,122,.18);
+  --gn:#6fcf97;--gnb:rgba(111,207,151,.12);--gnbd:rgba(111,207,151,.4);
+  --rd:#eb5757;--rdb:rgba(235,87,87,.1);--rdbd:rgba(235,87,87,.35);
+  --bl:#56b4d3;--or:#f0a05a;
+  --r:12px;--rs:8px;
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;color:var(--tx);display:flex;flex-direction:column;padding-top:var(--st);}
+
+/* SCREENS */
+.screen{display:none;flex-direction:column;height:100%;animation:fu .22s ease;}
+.screen.active{display:flex;}
+@keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;flex-shrink:0;}
+.tb-logo{font-size:20px;font-weight:700;color:var(--tx);letter-spacing:-.3px;}
+.tb-logo .ac{color:var(--ac);}
+.tb-sub{font-size:12px;color:var(--tx3);margin-top:1px;}
+.tb-right{display:flex;gap:8px;align-items:center;}
+.icon-btn{width:36px;height:36px;border-radius:var(--rs);border:1px solid var(--bd);background:var(--s2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.icon-btn:active{opacity:.7;}
+.icon-btn svg{width:18px;height:18px;stroke:var(--tx2);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+
+/* CREDIT BADGE */
+.cr-badge{display:flex;align-items:center;gap:5px;border-radius:100px;padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;transition:opacity .15s;}
+.cr-badge:active{opacity:.7;}
+.cr-badge.free{background:var(--gnb);border-color:var(--gnbd);color:var(--gn);}
+.cr-badge.paid{background:var(--acb);border-color:rgba(232,201,122,.3);color:var(--ac);}
+.cr-badge.empty{background:var(--rdb);border-color:var(--rdbd);color:var(--rd);}
+
+/* SCROLL BODY */
+.scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 16px;}
+.scroll-body::-webkit-scrollbar{display:none;}
+
+/* NAV TABS */
+.nav-tabs{display:flex;border-top:1px solid var(--bd);background:var(--s1);flex-shrink:0;padding-bottom:var(--sb);}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 0 10px;gap:3px;color:var(--tx3);font-size:10px;border:none;background:transparent;cursor:pointer;transition:color .15s;}
+.nav-tab.active{color:var(--ac);}
+.nav-tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+
+/* LABELS */
+.slabel{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--tx3);margin:14px 0 8px;}
+
+/* SUBJECTS */
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.sc{border-radius:var(--r);padding:10px 8px;text-align:center;cursor:pointer;border:2px solid transparent;background:var(--s2);transition:all .15s;position:relative;}
+.sc.active{background:color-mix(in srgb,var(--cc) 15%,transparent);border-color:var(--cc);}
+.sc:active{opacity:.7;}
+.sdot{width:9px;height:9px;border-radius:50%;margin:0 auto 6px;}
+.slbl{font-size:12px;font-weight:500;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.scnt{font-size:10px;color:var(--tx3);margin-top:3px;}
+
+/* UPLOAD */
+.upz{border:1.5px dashed var(--bd2);border-radius:var(--r);padding:22px 14px;text-align:center;cursor:pointer;transition:all .2s;}
+.upz:active{background:var(--acb);}
+.upz svg{width:34px;height:34px;stroke:var(--tx3);fill:none;margin-bottom:8px;stroke-width:1.5;}
+.upz p{font-size:13px;color:var(--tx2);line-height:1.5;}
+.upz span{color:var(--ac);font-weight:500;}
+.fbadge{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--bd2);border-radius:var(--rs);padding:10px 13px;}
+.fbadge svg{width:20px;height:20px;stroke:var(--ac);fill:none;flex-shrink:0;}
+.fname{flex:1;font-size:13px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.frm{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:18px;padding:2px;}
+.frm:active{color:var(--rd);}
+
+/* SETTINGS GRID */
+.stg{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.stb{background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 12px;}
+.stb label{font-size:10px;color:var(--tx3);display:block;margin-bottom:4px;}
+.stb select{width:100%;background:transparent;border:none;color:var(--tx);font-family:inherit;font-size:13px;font-weight:500;outline:none;appearance:none;cursor:pointer;}
+
+/* GENERATE BUTTON */
+.gbtn{width:100%;background:var(--ac);color:#1a1208;border:none;border-radius:var(--r);padding:15px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;transition:opacity .15s;}
+.gbtn:active{opacity:.8;}
+.gbtn:disabled{opacity:.4;cursor:not-allowed;}
+.spin{width:16px;height:16px;border:2.5px solid rgba(26,18,8,.3);border-top-color:#1a1208;border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0;}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ERROR / INFO BANNERS */
+.errbanner{background:var(--rdb);border:1px solid var(--rdbd);border-radius:var(--rs);padding:10px 13px;font-size:13px;color:var(--rd);display:none;margin-bottom:10px;line-height:1.5;}
+.errbanner.vis{display:block;}
+.infobanner{background:var(--gnb);border:1px solid var(--gnbd);border-radius:var(--rs);padding:10px 13px;font-size:12px;color:var(--gn);display:none;margin-bottom:10px;line-height:1.5;display:flex;align-items:center;gap:8px;}
+.infobanner.vis{display:flex;}
+
+/* EXAM HEADER */
+.esubj-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.esubj-dot{width:10px;height:10px;border-radius:50%;}
+.esubj-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+.etitle{font-size:18px;font-weight:700;color:var(--tx);line-height:1.25;margin-bottom:8px;}
+.emeta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.mtag{font-size:10px;padding:3px 8px;border-radius:100px;background:var(--s2);border:1px solid var(--bd);color:var(--tx3);}
+.mtag.ac{color:var(--ac);border-color:rgba(232,201,122,.3);background:var(--acb);}
+
+/* STUDY BAR */
+.sbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.mtog{display:flex;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);padding:3px;flex-shrink:0;}
+.mbtn{padding:6px 13px;border-radius:6px;border:none;background:transparent;color:var(--tx2);font-size:12px;font-family:inherit;cursor:pointer;font-weight:500;transition:all .15s;}
+.mbtn.active{background:var(--ac);color:#1a1208;}
+.scbadge{font-size:12px;font-weight:600;padding:5px 12px;border-radius:100px;background:var(--s2);border:1px solid var(--bd);color:var(--tx2);flex-shrink:0;}
+.scbadge.good{background:var(--gnb);border-color:var(--gnbd);color:var(--gn);}
+.scbadge.bad{background:var(--rdb);border-color:var(--rdbd);color:var(--rd);}
+.sbar-r{display:flex;gap:6px;margin-left:auto;}
+.cbtn{padding:6px 13px;border-radius:var(--rs);border:1px solid var(--bd);background:transparent;color:var(--tx2);font-size:12px;font-family:inherit;cursor:pointer;transition:all .15s;}
+.cbtn.check{background:var(--ac);color:#1a1208;border-color:var(--ac);font-weight:600;}
+.cbtn.retry{border-color:rgba(86,180,211,.35);color:var(--bl);}
+.cbtn:active{opacity:.7;}
+.cbtn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* SCORE SUMMARY */
+.ssumm{display:none;border-radius:var(--r);padding:12px 14px;margin-bottom:12px;border:1px solid;}
+.ssumm.vis{display:flex;align-items:center;gap:12px;}
+.ssumm.pass{background:var(--gnb);border-color:var(--gnbd);}
+.ssumm.fail{background:var(--rdb);border-color:var(--rdbd);}
+.scirc{width:46px;height:46px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.ssumm.pass .scirc{color:var(--gn);}
+.ssumm.fail .scirc{color:var(--rd);}
+.sinfo{flex:1;min-width:0;}
+.stit{font-size:13px;font-weight:600;margin-bottom:2px;}
+.ssumm.pass .stit{color:var(--gn);}
+.ssumm.fail .stit{color:var(--rd);}
+.sdet{font-size:11px;color:var(--tx2);line-height:1.4;}
+.strk{height:4px;background:var(--s3);border-radius:2px;margin-top:6px;}
+.sfil{height:100%;border-radius:2px;transition:width .6s ease;}
+
+/* QUESTION CARDS */
+.qlist{display:flex;flex-direction:column;gap:10px;}
+.qcard{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;}
+.qcard.cc{border-color:var(--gnbd);}
+.qcard.cw{border-color:var(--rdbd);}
+.qhdr{display:flex;align-items:flex-start;gap:8px;padding:11px 13px;background:var(--s2);border-bottom:1px solid var(--bd);}
+.qnum{font-size:10px;font-weight:700;color:var(--ac);background:var(--acb);border:1px solid rgba(232,201,122,.25);border-radius:5px;padding:2px 7px;flex-shrink:0;margin-top:2px;}
+.qtext{flex:1;font-size:14px;line-height:1.55;color:var(--tx);}
+.qtag{font-size:9px;font-weight:600;padding:2px 6px;border-radius:100px;border:1px solid;flex-shrink:0;margin-top:2px;}
+.qtag.mc{background:rgba(86,180,211,.1);color:var(--bl);border-color:rgba(86,180,211,.3);}
+.qtag.tf{background:rgba(111,207,151,.1);color:var(--gn);border-color:rgba(111,207,151,.3);}
+.qtag.sa{background:rgba(232,201,122,.1);color:var(--ac);border-color:rgba(232,201,122,.3);}
+.qbody{padding:10px 13px;}
+
+/* MC OPTIONS */
+.mcopts{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
+.mcopt{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--rs);border:1.5px solid var(--bd);background:var(--s2);font-size:13px;color:var(--tx2);cursor:pointer;transition:all .15s;user-select:none;}
+.mcopt:active:not(.disabled){opacity:.8;}
+.mcopt.sel{border-color:var(--ac);background:var(--acb2);color:var(--tx);}
+.mcopt.ok{border-color:var(--gnbd)!important;background:var(--gnb)!important;color:var(--gn)!important;}
+.mcopt.bad{border-color:var(--rdbd)!important;background:var(--rdb)!important;color:var(--rd)!important;}
+.mcopt.rv{border-color:var(--gnbd)!important;background:rgba(111,207,151,.05)!important;color:var(--gn)!important;}
+.mcopt.disabled{cursor:default;}
+.mcltr{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;background:var(--s1);color:var(--tx3);transition:all .15s;}
+.mcopt.sel .mcltr{background:var(--ac);border-color:var(--ac);color:#1a1208;}
+.mcopt.ok  .mcltr{background:var(--gn);border-color:var(--gn);color:#0a2014;}
+.mcopt.bad .mcltr{background:var(--rd);border-color:var(--rd);color:#fff;}
+.mcopt.rv  .mcltr{background:var(--gn);border-color:var(--gn);color:#0a2014;}
+.mctxt{flex:1;line-height:1.4;}
+.mcic{margin-left:auto;font-size:14px;flex-shrink:0;}
+
+/* TRUE/FALSE */
+.tfopts{display:flex;gap:8px;margin-bottom:8px;}
+.tfopt{flex:1;padding:11px;border-radius:var(--rs);border:1.5px solid var(--bd);background:var(--s2);font-size:13px;font-weight:600;color:var(--tx2);cursor:pointer;text-align:center;transition:all .15s;user-select:none;}
+.tfopt:active:not(.disabled){opacity:.8;}
+.tfopt.sel{border-color:var(--ac);background:var(--acb2);color:var(--tx);}
+.tfopt.ok{border-color:var(--gnbd)!important;background:var(--gnb)!important;color:var(--gn)!important;}
+.tfopt.bad{border-color:var(--rdbd)!important;background:var(--rdb)!important;color:var(--rd)!important;}
+.tfopt.rv{border-color:var(--gnbd)!important;background:rgba(111,207,151,.05)!important;color:var(--gn)!important;}
+.tfopt.disabled{cursor:default;}
+
+/* SHORT ANSWER */
+.sainput{width:100%;background:var(--s2);border:1.5px solid var(--bd);border-radius:var(--rs);padding:10px 12px;color:var(--tx);font-family:inherit;font-size:13px;outline:none;resize:none;min-height:72px;transition:border-color .15s;margin-bottom:8px;}
+.sainput:focus{border-color:var(--ac);}
+.sainput:disabled{opacity:.7;}
+
+/* FEEDBACK */
+.fb{display:none;padding:9px 12px;border-radius:var(--rs);font-size:12px;line-height:1.55;margin-bottom:6px;border:1px solid;}
+.fb.vis{display:flex;gap:8px;align-items:flex-start;}
+.fb.ok{background:var(--gnb);border-color:var(--gnbd);color:var(--gn);}
+.fb.bad{background:var(--rdb);border-color:var(--rdbd);color:var(--rd);}
+.fbic{font-size:14px;flex-shrink:0;}
+.fbbd{flex:1;}
+
+/* EXPLANATION */
+.expbox{background:var(--s2);border-left:3px solid rgba(232,201,122,.4);border-radius:0 var(--rs) var(--rs) 0;padding:9px 12px;font-size:12px;color:var(--tx2);line-height:1.55;display:none;margin-top:6px;}
+.expbox.vis{display:block;}
+.explbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ac2);margin-bottom:3px;}
+
+/* REVIEW SECTION */
+.rvsec{display:none;margin-top:8px;border-top:1px solid var(--bd);padding-top:8px;}
+.rvbtn{font-size:12px;color:var(--tx3);background:none;border:1px solid var(--bd);border-radius:100px;padding:4px 13px;cursor:pointer;font-family:inherit;transition:all .15s;}
+.rvbtn:active{opacity:.7;}
+.ansbox{background:var(--s2);border:1px solid var(--gnbd);border-radius:var(--rs);padding:9px 12px;font-size:13px;color:var(--gn);line-height:1.5;margin-top:7px;display:none;}
+.ansbox.vis{display:block;}
+.anslbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:rgba(111,207,151,.6);margin-bottom:3px;}
+
+/* EXAM TOOLBAR */
+.etoolbar{background:var(--s1);border-top:1px solid var(--bd);padding:10px 14px;display:none;gap:6px;flex-wrap:wrap;flex-shrink:0;}
+.etoolbar.vis{display:flex;}
+.tbtn{padding:7px 13px;border-radius:var(--rs);border:1px solid var(--bd);background:var(--s2);color:var(--tx2);font-family:inherit;font-size:12px;cursor:pointer;transition:all .15s;}
+.tbtn:active{opacity:.7;}
+.tbtn.ac{border-color:rgba(232,201,122,.35);color:var(--ac);background:var(--acb);}
+.tspc{flex:1;}
+
+/* BANK */
+.bfilter{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;}
+.bfilter::-webkit-scrollbar{display:none;}
+.bpill{padding:5px 12px;border-radius:100px;font-size:12px;border:1px solid var(--bd);color:var(--tx3);cursor:pointer;white-space:nowrap;background:transparent;flex-shrink:0;}
+.bpill.active{font-weight:600;}
+.bsec{margin-bottom:16px;}
+.bshdr{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+.bsdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.bsname{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--tx3);}
+.bscnt{font-size:11px;color:var(--tx3);margin-left:auto;}
+.biwrap{position:relative;margin-bottom:8px;border-radius:var(--r);}
+.bidelbg{position:absolute;right:0;top:0;bottom:0;width:76px;background:var(--rd);border-radius:0 var(--r) var(--r) 0;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.bidelbg svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;}
+.bitem{position:relative;background:var(--s1);border:1px solid var(--bd);border-left:3px solid var(--ac);border-radius:var(--r);padding:11px 13px;cursor:pointer;transition:transform .22s ease;z-index:1;}
+.bitem.swiped{transform:translateX(-76px);}
+.bitem.deleting{opacity:0;transform:translateX(-110px) scaleY(0.7);transition:all .22s ease;pointer-events:none;}
+.bititle{font-size:13px;font-weight:500;color:var(--tx);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bimeta{font-size:11px;color:var(--tx3);display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.bidelin{width:28px;height:28px;border-radius:7px;border:1px solid var(--rdbd);background:var(--rdb);display:flex;align-items:center;justify-content:center;cursor:pointer;margin-left:auto;flex-shrink:0;}
+.bidelin svg{width:14px;height:14px;stroke:var(--rd);fill:none;stroke-width:2;}
+.bidelin:active{opacity:.7;}
+.selbar{background:var(--rdb);border:1px solid var(--rdbd);border-radius:var(--rs);padding:9px 13px;margin-bottom:10px;display:none;align-items:center;justify-content:space-between;}
+.selbar.vis{display:flex;}
+.selcnt{font-size:13px;font-weight:600;color:var(--rd);}
+.seldelbtn{padding:6px 14px;background:var(--rd);color:#fff;border:none;border-radius:7px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;}
+.seldelbtn:active{opacity:.8;}
+.selcancel{font-size:12px;color:var(--tx3);background:none;border:none;cursor:pointer;padding:4px 8px;}
+.bichk{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--bd2);background:var(--s2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:4px;}
+.bichk.checked{background:var(--rd);border-color:var(--rd);}
+.bichk svg{width:12px;height:12px;stroke:#fff;fill:none;stroke-width:2.5;display:none;}
+.bichk.checked svg{display:block;}
+.emptystate{text-align:center;padding:40px 20px;}
+.emptyicon{font-size:44px;opacity:.3;margin-bottom:10px;}
+.emptytitle{font-size:15px;font-weight:600;color:var(--tx2);margin-bottom:5px;}
+.emptysub{font-size:13px;color:var(--tx3);line-height:1.6;}
+
+/* SHEETS */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none;}
+.overlay.vis{display:block;}
+.sheet{position:fixed;bottom:0;left:0;right:0;background:var(--s1);border-radius:20px 20px 0 0;border-top:1px solid var(--bd2);z-index:51;transform:translateY(100%);transition:transform .25s ease;max-height:92vh;overflow-y:auto;padding-bottom:var(--sb);}
+.sheet.vis{transform:translateY(0);}
+.sheet::-webkit-scrollbar{display:none;}
+.shandle{width:36px;height:4px;border-radius:2px;background:var(--s3);margin:10px auto 6px;}
+.stitle2{font-size:17px;font-weight:600;color:var(--tx);padding:8px 18px 2px;}
+.ssub2{font-size:12px;color:var(--tx3);padding:0 18px 12px;border-bottom:1px solid var(--bd);}
+.sbody{padding:12px 16px 20px;}
+.sgrp{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:8px;}
+.srow{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--bd);}
+.srow:last-child{border-bottom:none;}
+.srow-lbl{font-size:13px;color:var(--tx2);}
+.srow-val{font-size:13px;font-weight:500;color:var(--tx);}
+.sdone{width:100%;background:var(--ac);color:#1a1208;border:none;border-radius:var(--r);padding:13px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px;}
+.sdone:active{opacity:.8;}
+
+/* SAVE SUBJECT GRID */
+.ssgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.ssbtn{padding:11px 12px;border-radius:var(--rs);border:1.5px solid var(--bd);background:var(--s2);cursor:pointer;text-align:left;transition:all .15s;}
+.ssbtn.sel{border-color:var(--cc,var(--ac));background:color-mix(in srgb,var(--cc,var(--ac)) 12%,transparent);}
+.ssbtn:active{opacity:.7;}
+.ssname{font-size:13px;font-weight:500;color:var(--tx);display:flex;align-items:center;gap:6px;}
+.ssdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sscnt{font-size:11px;color:var(--tx3);margin-top:2px;}
+
+/* DUP / DEL */
+.dupicon{text-align:center;font-size:36px;margin-bottom:10px;}
+.duptitle{font-size:16px;font-weight:600;color:var(--tx);text-align:center;margin-bottom:4px;}
+.dupsub{font-size:12px;color:var(--tx2);text-align:center;line-height:1.5;margin-bottom:14px;}
+.dupcmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.dupcard{border-radius:var(--rs);padding:10px;border:1px solid var(--bd);}
+.dupcard.ex{background:var(--s2);}
+.dupcard.nw{background:var(--rdb);border-color:var(--rdbd);}
+.duplbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--tx3);margin-bottom:4px;}
+.dupcard.nw .duplbl{color:var(--rd);}
+.dupname{font-size:11px;font-weight:600;color:var(--tx);margin-bottom:2px;}
+.dupmeta{font-size:10px;color:var(--tx3);}
+.duprbtn{width:100%;background:var(--rd);color:#fff;border:none;border-radius:var(--rs);padding:12px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:7px;}
+.dupkbtn{width:100%;background:transparent;color:var(--tx2);border:1px solid var(--bd);border-radius:var(--rs);padding:11px;font-size:13px;cursor:pointer;margin-bottom:7px;}
+.dupcbtn{width:100%;background:transparent;color:var(--tx3);border:none;padding:8px;font-size:12px;cursor:pointer;}
+.duprbtn:active,.dupkbtn:active,.dupcbtn:active{opacity:.7;}
+
+/* ONBOARDING */
+.obhero{text-align:center;padding:36px 20px 22px;}
+.obicon{font-size:60px;margin-bottom:14px;}
+.obtitle{font-size:28px;font-weight:700;color:var(--tx);margin-bottom:8px;}
+.obtitle .ac{color:var(--ac);}
+.obsub{font-size:14px;color:var(--tx2);line-height:1.65;max-width:280px;margin:0 auto;}
+.obsteps{padding:0 16px 8px;}
+.obstep{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px;}
+.obnum{width:30px;height:30px;border-radius:50%;background:var(--ac);color:#1a1208;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.obstep-t{font-size:14px;font-weight:600;color:var(--tx);margin-bottom:3px;}
+.obstep-d{font-size:12px;color:var(--tx2);line-height:1.55;}
+.free-badge{background:var(--gnb);border:1px solid var(--gnbd);border-radius:var(--rs);padding:11px 14px;font-size:13px;color:var(--gn);margin-bottom:18px;display:flex;align-items:center;gap:8px;line-height:1.5;}
+.obbtn{width:100%;background:var(--ac);color:#1a1208;border:none;border-radius:var(--r);padding:15px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;}
+.obbtn:active{opacity:.8;}
+
+/* PAYWALL */
+.pw-hero{text-align:center;padding:22px 16px 16px;}
+.pw-icon{font-size:48px;margin-bottom:10px;}
+.pw-title{font-size:22px;font-weight:700;color:var(--tx);margin-bottom:6px;}
+.pw-sub{font-size:13px;color:var(--tx2);line-height:1.6;max-width:280px;margin:0 auto 14px;}
+.pw-used{background:var(--acb);border:1px solid rgba(232,201,122,.3);border-radius:var(--rs);padding:10px 14px;font-size:12px;color:var(--ac);text-align:center;margin-bottom:16px;line-height:1.5;}
+.pw-feats{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin-bottom:18px;}
+.pw-feat-title{font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;}
+.pw-feat{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--tx2);margin-bottom:7px;}
+.pw-feat:last-child{margin-bottom:0;}
+.pw-feat-icon{font-size:16px;flex-shrink:0;}
+.pack-cards{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;}
+.pack-card{border:1.5px solid var(--bd);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:all .15s;position:relative;background:var(--s2);}
+.pack-card:active{opacity:.8;}
+.pack-card.sel{border-color:var(--ac);background:var(--acb);}
+.pack-card.popular{border-color:rgba(111,207,151,.4);}
+.pack-card.popular.sel{border-color:var(--gn);background:var(--gnb);}
+.pack-badge{position:absolute;top:-10px;right:14px;background:var(--gn);color:#0a2014;font-size:10px;font-weight:700;padding:2px 10px;border-radius:100px;}
+.pack-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.pack-name{font-size:15px;font-weight:600;color:var(--tx);}
+.pack-price{font-size:22px;font-weight:700;color:var(--tx);}
+.pack-card.sel .pack-price{color:var(--ac);}
+.pack-card.popular.sel .pack-price{color:var(--gn);}
+.pack-bottom{display:flex;align-items:center;justify-content:space-between;}
+.pack-exams{font-size:13px;color:var(--tx2);}
+.pack-per{font-size:11px;color:var(--tx3);padding:3px 8px;background:var(--s3);border-radius:6px;}
+.pack-card.sel .pack-per{background:var(--acb2);color:var(--ac2);}
+.pack-card.popular.sel .pack-per{background:var(--gnb);color:var(--gn);}
+.wa-wrap{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;}
+.wa-title{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.wa-sub{font-size:11px;color:var(--tx3);margin-bottom:10px;line-height:1.5;}
+.wa-input{width:100%;background:var(--s3);border:1.5px solid var(--bd2);border-radius:var(--rs);padding:11px 14px;color:var(--tx);font-family:inherit;font-size:15px;outline:none;}
+.wa-input:focus{border-color:var(--gn);}
+.wa-input::placeholder{color:var(--tx3);}
+.pp-btn{width:100%;background:#FFD140;color:#003087;border:none;border-radius:var(--r);padding:15px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;}
+.pp-btn:active{opacity:.85;}
+.pp-logo{font-size:18px;font-weight:800;font-style:italic;letter-spacing:-.5px;}
+.pp-blue{color:#003087;}
+.pp-sky{color:#009CDE;}
+.pp-note{font-size:11px;color:var(--tx3);text-align:center;line-height:1.6;margin-bottom:16px;}
+.code-entry{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:12px;}
+.code-entry-title{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:4px;}
+.code-entry-sub{font-size:11px;color:var(--tx3);margin-bottom:10px;line-height:1.5;}
+.code-row{display:flex;gap:8px;}
+.code-input{flex:1;background:var(--s3);border:1px solid var(--bd2);border-radius:var(--rs);padding:10px 14px;color:var(--tx);font-family:'Courier New',monospace;font-size:15px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;outline:none;}
+.code-input:focus{border-color:var(--ac);}
+.code-submit{padding:10px 16px;background:var(--ac);color:#1a1208;border:none;border-radius:var(--rs);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.code-submit:active{opacity:.8;}
+.mstatus{font-size:12px;margin-top:6px;min-height:16px;}
+.mstatus.ok{color:var(--gn);}
+.mstatus.err{color:var(--rd);}
+
+/* SETTINGS SHEET CONTENT */
+.credits-box{border-radius:var(--r);padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;}
+.credits-box.has{background:var(--acb);border:1px solid rgba(232,201,122,.3);}
+.credits-box.free{background:var(--gnb);border:1px solid var(--gnbd);}
+.credits-box.none{background:var(--rdb);border:1px solid var(--rdbd);}
+.cr-num{font-size:34px;font-weight:700;flex-shrink:0;}
+.credits-box.has .cr-num{color:var(--ac);}
+.credits-box.free .cr-num{color:var(--gn);}
+.credits-box.none .cr-num{color:var(--rd);}
+.cr-info-lbl{font-size:13px;font-weight:500;margin-bottom:2px;}
+.credits-box.has .cr-info-lbl{color:var(--ac);}
+.credits-box.free .cr-info-lbl{color:var(--gn);}
+.credits-box.none .cr-info-lbl{color:var(--rd);}
+.cr-info-sub{font-size:11px;color:var(--tx3);}
+.buy-btn{width:100%;background:var(--ac);color:#1a1208;border:none;border-radius:var(--rs);padding:11px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px;}
+.buy-btn:active{opacity:.8;}
+.rename-input{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);padding:11px 14px;color:var(--tx);font-family:inherit;font-size:14px;outline:none;margin-bottom:12px;}
+.rename-input:focus{border-color:var(--ac);}
+.divider{height:1px;background:var(--bd);margin:12px 0;}
+
+/* TOAST */
+#_toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:var(--s3);color:var(--tx);padding:9px 20px;border-radius:100px;font-size:13px;font-weight:500;z-index:999;white-space:nowrap;border:1px solid var(--bd2);transition:opacity .2s;opacity:0;pointer-events:none;}
+</style>
+</head>
+<body>
+
+<!-- ░░ ONBOARDING ░░ -->
+<div class="screen active" id="scr-onboard">
+  <div class="scroll-body" style="padding-top:10px;">
+    <div class="obhero">
+      <div class="obicon">📚</div>
+      <div class="obtitle"><span class="ac">Exam</span>Forge</div>
+      <div class="obsub">Turn your PDF notes into exam questions instantly. Study smarter, score higher.</div>
+    </div>
+    <div class="obsteps">
+      <div class="obstep"><div class="obnum">1</div><div><div class="obstep-t">Choose your subject</div><div class="obstep-d">Pick from Engineering, Topik, English, PLC, Law, or Korean Language.</div></div></div>
+      <div class="obstep"><div class="obnum">2</div><div><div class="obstep-t">Upload your PDF lesson</div><div class="obstep-d">Any text-based PDF — lecture notes, textbook chapters, study materials.</div></div></div>
+      <div class="obstep"><div class="obnum">3</div><div><div class="obstep-t">Generate & study</div><div class="obstep-d">Get exam questions in seconds. Answer interactively, check your score, retake.</div></div></div>
+      <div class="free-badge"><span style="font-size:18px;">🎁</span><div>Start with <strong>2 free exams</strong> — no payment, no account needed. Try it now!</div></div>
+      <button class="obbtn" onclick="startApp()">Get Started →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ MAIN / GENERATE ░░ -->
+<div class="screen" id="scr-main">
+  <div class="topbar">
+    <div style="flex:1;min-width:0;">
+      <div class="tb-logo"><span class="ac">Exam</span>Forge</div>
+      <div class="tb-sub" id="main-sub">Ready to generate</div>
+    </div>
+    <div class="tb-right">
+      <div id="cr-badge" class="cr-badge free" onclick="openPaywall()">🎁 2 free left</div>
+      <div class="icon-btn" onclick="openSettings()">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-body">
+    <div class="errbanner" id="main-err"></div>
+    <div class="slabel">Subject</div>
+    <div class="sg" id="subj-grid"></div>
+    <div class="slabel" style="margin-top:16px;">PDF Lesson</div>
+    <div class="upz" id="upzone" onclick="pickPDF()">
+      <svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+      <p><span>Tap to choose</span> a PDF file<br><span style="font-size:.75rem;color:var(--tx3);">or drag & drop</span></p>
+    </div>
+    <div class="fbadge" id="fbadge" style="display:none;">
+      <svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span class="fname" id="fname"></span>
+      <button class="frm" onclick="removeFile()">✕</button>
+    </div>
+    <input type="file" id="pdf-input" accept=".pdf,application/pdf" style="display:none;">
+    <div class="slabel" style="margin-top:16px;">Settings</div>
+    <div class="stg">
+      <div class="stb"><label>Questions</label><select id="s-numq"><option value="5">5</option><option value="8">8</option><option value="10" selected>10</option><option value="15">15</option><option value="20">20</option></select></div>
+      <div class="stb"><label>Difficulty</label><select id="s-diff"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option><option value="mixed">Mixed</option></select></div>
+      <div class="stb"><label>Type</label><select id="s-type"><option value="multiple_choice">MC Only</option><option value="true_false">T/F Only</option><option value="short_answer">SA Only</option><option value="mixed" selected>Mixed</option></select></div>
+      <div class="stb"><label>Language</label><select id="s-lang"><option value="English">English</option><option value="Sinhala">සිංහල</option><option value="Korean">한국어</option><option value="Japanese">日本語</option><option value="Chinese">中文</option><option value="Spanish">Español</option><option value="French">Français</option><option value="German">Deutsch</option><option value="Arabic">العربية</option></select></div>
+    </div>
+    <div class="stg" style="grid-template-columns:1fr;margin-top:8px;">
+      <div class="stb"><label>Explanations</label><select id="s-exp"><option value="yes" selected>Yes — show after checking</option><option value="no">No</option></select></div>
+    </div>
+    <button class="gbtn" id="gen-btn" onclick="generateExam()"><span id="gen-icon">✨</span><span id="gen-txt">Generate Exam</span></button>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('main')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Generate</button>
+    <button class="nav-tab" onclick="switchTab('bank')"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Bank</button>
+    <button class="nav-tab" onclick="showScr('howto')" style="flex:1;"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/></svg>How To</button>
+    <button class="nav-tab" onclick="showScr('about')" style="flex:1;"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 3-8 3v6h16v-6s-2-3-8-3z" fill="none" stroke="currentColor" stroke-width="2"/></svg>About</button>
+    <button class="nav-tab" onclick="showScr('contact')" style="flex:1;"><svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" fill="currentColor"/></svg>Contact</button>
+  </div>
+</div>
+
+<!-- ░░ EXAM ░░ -->
+<div class="screen" id="scr-exam">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+      <button onclick="backToMain()" style="background:none;border:none;color:var(--tx2);cursor:pointer;padding:4px;font-size:24px;flex-shrink:0;line-height:1;">‹</button>
+      <div style="min-width:0;"><div style="display:flex;align-items:center;gap:6px;" id="exam-subj-row"></div><div id="exam-title" style="font-size:15px;font-weight:600;color:var(--tx);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div></div>
+    </div>
+    <div class="tb-right">
+      <div class="icon-btn" onclick="openSaveModal()" title="Save">
+        <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-body" id="exam-body">
+    <div id="exam-meta" class="emeta"></div>
+    <div class="sbar">
+      <div class="mtog"><button class="mbtn active" id="mode-study" onclick="setMode('study')">✏️ Study</button><button class="mbtn" id="mode-review" onclick="setMode('review')">📖 Review</button></div>
+      <span class="scbadge" id="sc-badge">Not checked</span>
+      <div class="sbar-r"><button class="cbtn check" id="check-btn" onclick="checkAnswers()">✓ Check</button><button class="cbtn retry" onclick="retake()">🔀</button></div>
+    </div>
+    <div class="ssumm" id="score-summ"><div class="scirc" id="sc-circle"></div><div class="sinfo"><div class="stit" id="sc-title"></div><div class="sdet" id="sc-detail"></div><div class="strk"><div class="sfil" id="sc-fill"></div></div></div></div>
+    <div class="qlist" id="qlist"></div>
+  </div>
+  <div class="etoolbar" id="exam-toolbar">
+    <button class="tbtn" onclick="revealAll()">👁 Show All</button>
+    <button class="tbtn" onclick="hideAll()">🙈 Hide</button>
+    <button class="tbtn" onclick="toggleExp()">💡 Explain</button>
+    <div class="tspc"></div>
+    <button class="tbtn" onclick="exportExam()">📤 Export</button>
+  </div>
+</div>
+
+<!-- ░░ BANK ░░ -->
+<div class="screen" id="scr-bank">
+  <div class="topbar"><div><div class="tb-logo"><span class="ac">Exam</span>Forge</div><div class="tb-sub" id="bank-sub">Question Bank</div></div><div class="tb-right"><div class="icon-btn" onclick="toggleSelect()"><svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div></div></div>
+  <div class="scroll-body">
+    <div class="selbar" id="sel-bar"><span class="selcnt" id="sel-cnt">0 selected</span><div style="display:flex;gap:6px;align-items:center;"><button class="selcancel" onclick="cancelSelect()">Cancel</button><button class="seldelbtn" onclick="deleteSelected()">🗑 Delete</button></div></div>
+    <div class="bfilter" id="bank-filter"></div>
+    <div id="bank-list"></div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab" onclick="switchTab('main')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Generate</button>
+    <button class="nav-tab active" onclick="switchTab('bank')"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Bank</button>
+  </div>
+</div>
+
+<!-- ░░ PAYWALL ░░ -->
+<div class="screen" id="scr-paywall">
+  <div class="topbar">
+    <button onclick="backToMain()" style="background:none;border:none;color:var(--tx2);cursor:pointer;padding:4px;font-size:24px;line-height:1;">‹</button>
+    <div style="flex:1;text-align:center;"><div class="tb-logo"><span class="ac">Exam</span>Forge</div></div>
+    <div style="width:30px;"></div>
+  </div>
+  <div class="scroll-body">
+    <div class="pw-hero">
+      <div class="pw-icon">⚡</div>
+      <div class="pw-title">Get More Exams</div>
+      <div class="pw-sub">Buy a credit pack to generate unlimited exams. Access codes sent instantly via WhatsApp.</div>
+    </div>
+    <div class="pw-used">🎁 Free exams used · <strong>Credits never expire — use them anytime</strong></div>
+    <div class="pw-feats">
+      <div class="pw-feat-title">What you get</div>
+      <div class="pw-feat"><span class="pw-feat-icon">📄</span>Generate exams from any PDF</div>
+      <div class="pw-feat"><span class="pw-feat-icon">🌍</span>9 languages including Sinhala & Korean</div>
+      <div class="pw-feat"><span class="pw-feat-icon">✅</span>Interactive answers with instant scoring</div>
+      <div class="pw-feat"><span class="pw-feat-icon">📚</span>Save exams to question bank forever</div>
+      <div class="pw-feat"><span class="pw-feat-icon">🔀</span>Retake with shuffled questions</div>
+      <div class="pw-feat"><span class="pw-feat-icon">♾️</span>Credits never expire</div>
+    </div>
+    <div class="slabel">Choose a pack</div>
+    <div class="pack-cards">
+      <div class="pack-card sel" id="pack-starter" onclick="selPack('starter')">
+        <div class="pack-top"><span class="pack-name">Starter</span><span class="pack-price">$5</span></div>
+        <div class="pack-bottom"><span class="pack-exams">100 exams</span><span class="pack-per">$0.05 / exam</span></div>
+      </div>
+      <div class="pack-card popular" id="pack-popular" onclick="selPack('popular')">
+        <div class="pack-badge">Best value</div>
+        <div class="pack-top"><span class="pack-name">Popular</span><span class="pack-price">$12</span></div>
+        <div class="pack-bottom"><span class="pack-exams">300 exams</span><span class="pack-per">$0.04 / exam · save 20%</span></div>
+      </div>
+      <div class="pack-card" id="pack-power" onclick="selPack('power')">
+        <div class="pack-top"><span class="pack-name">Power</span><span class="pack-price">$20</span></div>
+        <div class="pack-bottom"><span class="pack-exams">600 exams</span><span class="pack-per">$0.033 / exam · save 33%</span></div>
+      </div>
+    </div>
+    <div class="wa-wrap">
+      <div class="wa-title">💬 Your WhatsApp number</div>
+      <div class="wa-sub">We'll send your access code here after payment is confirmed.</div>
+      <input class="wa-input" type="tel" id="wa-input" placeholder="+94 77 123 4567" autocomplete="tel">
+      <div class="mstatus" id="wa-status"></div>
+    </div>
+    <button class="pp-btn" id="pp-btn" onclick="doPayment()">
+      <span class="pp-logo"><span class="pp-blue">Pay</span><span class="pp-sky">Pal</span></span>
+      <span id="pp-txt">Pay $5 with PayPal</span>
+    </button>
+    <p class="pp-note">✅ Visa, Mastercard, PayPal & digital wallets accepted<br>💬 Your access code arrives via WhatsApp in 2-3 minutes</p>
+    <div class="code-entry">
+      <div class="code-entry-title">Already paid? Enter your code</div>
+      <div class="code-entry-sub">Already have a code? Enter it here to unlock your credits instantly.</div>
+      <div class="code-row">
+        <input class="code-input" type="text" id="code-input" placeholder="EFS-XXXX-XXXX" maxlength="14" autocomplete="off" spellcheck="false">
+        <button class="code-submit" onclick="redeemCode()">Unlock</button>
+      </div>
+      <div class="mstatus" id="code-status"></div>
+    </div>
+    <div style="text-align:center;margin-top:10px;margin-bottom:4px;">
+      <button onclick="backToMain()" style="background:none;border:none;color:var(--tx3);font-size:12px;cursor:pointer;padding:8px;">Maybe later</button>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ PAYMENT SUCCESS ░░ -->
+<div class="screen" id="scr-success">
+  <div class="topbar">
+    <div style="flex:1;text-align:center;"><div class="tb-logo"><span class="ac">Exam</span>Forge</div></div>
+    <div style="width:30px;"></div>
+  </div>
+  <div class="scroll-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;">
+    <div style="text-align:center;max-width:320px;">
+      <div style="font-size:64px;margin-bottom:20px;">✅</div>
+      <div style="font-size:24px;font-weight:700;color:var(--tx);margin-bottom:8px;">Payment Successful!</div>
+      <div style="font-size:14px;color:var(--tx2);line-height:1.6;margin-bottom:24px;">
+        Your payment has been received. Your access code is on its way to your WhatsApp number.
+      </div>
+      <div style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:20px;text-align:left;line-height:1.7;">
+        <div style="font-size:13px;font-weight:600;color:var(--tx);margin-bottom:8px;">📋 What happens next:</div>
+        <div style="font-size:12px;color:var(--tx2);">
+          1. 💬 You'll receive your code via WhatsApp<br>
+          2. 📋 Copy the code from WhatsApp<br>
+          3. ✨ Enter the code below to unlock your credits<br>
+          4. 🎉 Start generating unlimited exams!
+        </div>
+      </div>
+      <div style="background:var(--gnb);border:1px solid var(--gnbd);border-radius:var(--r);padding:14px;margin-bottom:20px;">
+        <div style="font-size:12px;color:var(--gn);">💡 <strong>Tip:</strong> Check your WhatsApp within 2-3 minutes. Make sure to whitelist our messages.</div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:100%;max-width:320px;padding:0 20px;">
+    <button onclick="backToPaywall()" style="width:100%;background:var(--ac);color:#1a1208;border:none;border-radius:var(--r);padding:13px;font-size:14px;font-weight:600;cursor:pointer;">Enter Your Code</button>
+    <button onclick="backToMain()" style="width:100%;background:transparent;color:var(--tx3);border:none;padding:10px;font-size:12px;cursor:pointer;margin-top:8px;">Back to app</button>
+  </div>
+</div>
+
+
+<!-- ABOUT US SCREEN -->
+<div class="screen" id="scr-about">
+  <div class="topbar">
+    <button onclick="backToMain()" style="background:none;border:none;color:var(--ac);font-size:20px;cursor:pointer;padding:10px;">←</button>
+    <div style="flex:1;text-align:center;"><div class="tb-logo"><span class="ac">About</span>EDUVIO</div></div>
+    <div style="width:30px;"></div>
+  </div>
+  <div class="scroll-body" style="padding:20px;">
+    <div style="max-width:500px;margin:0 auto;">
+      <div style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:20px;line-height:1.8;color:var(--tx2);margin-bottom:20px;">
+        <h3 style="color:var(--ac);margin-bottom:10px;font-size:16px;">About EDUVIO</h3>
+        <p style="margin-bottom:12px;font-size:13px;">EDUVIO is a team of education software and app developers located in South Korea. We are passionate about leveraging technology to transform the learning experience and make quality education accessible to everyone.</p>
+        
+        <h3 style="color:var(--ac);margin-bottom:10px;font-size:16px;margin-top:15px;">Our Mission</h3>
+        <p style="margin-bottom:12px;font-size:13px;">We are committed to supporting students in their studies by providing innovative, AI-powered tools that make learning more effective, engaging, and accessible. Our goal is to empower educators and learners worldwide.</p>
+        
+        <h3 style="color:var(--ac);margin-bottom:10px;font-size:16px;margin-top:15px;">Our Vision</h3>
+        <p style="font-size:13px;">ExamForge is our flagship product, designed to help students generate realistic practice exams from any study material, enabling smarter preparation and better academic outcomes.</p>
+      </div>
+
+      <div style="text-align:center;color:var(--tx3);font-size:11px;">
+        <p>© 2024 EDUVIO. All rights reserved.</p>
+        <p style="margin-top:5px;">Based in South Korea</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW TO USE SCREEN -->
+<div class="screen" id="scr-howto">
+  <div class="topbar">
+    <button onclick="backToMain()" style="background:none;border:none;color:var(--ac);font-size:20px;cursor:pointer;padding:10px;">←</button>
+    <div style="flex:1;text-align:center;"><div class="tb-logo"><span class="ac">How</span>to Use</div></div>
+    <div style="width:30px;"></div>
+  </div>
+  <div class="scroll-body" style="padding:20px;">
+    <div style="max-width:500px;margin:0 auto;">
+      <div style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:15px;line-height:1.8;margin-bottom:12px;">
+        <h3 style="color:var(--ac);margin-bottom:8px;font-size:14px;">📖 Step 1: Select Subject</h3>
+        <p style="color:var(--tx2);margin:0;font-size:12px;">Tap on any subject to select it. Long-press to rename subjects to match your classes.</p>
+      </div>
+
+      <div style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:15px;line-height:1.8;margin-bottom:12px;">
+        <h3 style="color:var(--ac);margin-bottom:8px;font-size:14px;">📄 Step 2: Upload PDF</h3>
+        <p style="color:var(--tx2);margin:0;font-size:12px;">Tap the upload area and select a text-based PDF file (lecture notes, textbooks, study guides).</p>
+      </div>
+
+      <div style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:15px;line-height:1.8;margin-bottom:12px;">
+        <h3 style="color:var(--ac);margin-bottom:8px;font-size:14px;">⚙️ Step 3: Configure Settings</h3>
+        <p style="color:var(--tx2);margin:0;font-size:12px;">Choose number of questions, difficulty, type, language, and explanations.</p>
+      </div>
+
+      <div style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:15px;line-height:1.8;margin-bottom:12px;">
+        <h3 style="color:var(--ac);margin-bottom:8px;font-size:14px;">🤖 Step 4: Generate Exam</h3>
+        <p style="color:var(--tx2);margin:0;font-size:12px;">Click "Generate Exam" and wait 10-30 seconds for AI to create your questions.</p>
+      </div>
+
+      <div style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:15px;line-height:1.8;margin-bottom:12px;">
+        <h3 style="color:var(--ac);margin-bottom:8px;font-size:14px;">✅ Step 5: Take Exam</h3>
+        <p style="color:var(--tx2);margin:0;font-size:12px;">Answer questions, tap "Check" to see answers, and get your score. Retake with shuffled questions anytime.</p>
+      </div>
+
+      <div style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:15px;line-height:1.8;">
+        <h3 style="color:var(--ac);margin-bottom:8px;font-size:14px;">💾 Step 6: Save & Review</h3>
+        <p style="color:var(--tx2);margin:0;font-size:12px;">Save exams to Question Bank, export for sharing, or delete when done.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT SCREEN -->
+<div class="screen" id="scr-contact">
+  <div class="topbar">
+    <button onclick="backToMain()" style="background:none;border:none;color:var(--ac);font-size:20px;cursor:pointer;padding:10px;">←</button>
+    <div style="flex:1;text-align:center;"><div class="tb-logo"><span class="ac">Contact</span>Us</div></div>
+    <div style="width:30px;"></div>
+  </div>
+  <div class="scroll-body" style="padding:20px;">
+    <div style="max-width:500px;margin:0 auto;">
+      <div style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:20px;margin-bottom:15px;">
+        <h3 style="color:var(--ac);margin-bottom:15px;font-size:16px;">Get in Touch</h3>
+        
+        <div style="margin-bottom:15px;">
+          <p style="color:var(--tx3);font-size:11px;margin-bottom:5px;text-transform:uppercase;">📧 Email</p>
+          <a href="mailto:info@eduvio.com" style="color:var(--ac);text-decoration:none;font-weight:600;font-size:13px;">info@eduvio.com</a>
+        </div>
+
+        <div style="margin-bottom:15px;padding-bottom:15px;border-bottom:1px solid var(--bd);">
+          <p style="color:var(--tx3);font-size:11px;margin-bottom:5px;text-transform:uppercase;">💬 WhatsApp</p>
+          <a href="https://wa.me/821049829310?text=Hi%20EDUVIO" style="color:var(--ac);text-decoration:none;font-weight:600;font-size:13px;">+82 10 4982 9310</a>
+        </div>
+
+        <div style="margin-bottom:15px;padding-bottom:15px;border-bottom:1px solid var(--bd);">
+          <p style="color:var(--tx3);font-size:11px;margin-bottom:5px;text-transform:uppercase;">🌐 Website</p>
+          <a href="https://eduvio.com" target="_blank" style="color:var(--ac);text-decoration:none;font-weight:600;font-size:13px;">eduvio.com</a>
+        </div>
+
+        <div>
+          <p style="color:var(--tx3);font-size:11px;margin-bottom:5px;text-transform:uppercase;">⏰ Support</p>
+          <p style="color:var(--tx2);font-size:12px;margin:0;">Send us a message anytime. We'll get back to you as soon as possible.</p>
+        </div>
+      </div>
+
+      <div style="background:rgba(111,207,151,0.1);border:1px solid rgba(111,207,151,0.4);border-radius:8px;padding:15px;color:var(--gn);font-size:12px;text-align:center;">
+        <p style="margin:0;">Have questions? Feedback? Feature ideas?</p>
+        <p style="margin-top:8px;margin-bottom:0;">We'd love to hear from you!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS SHEET -->
+<div class="overlay" id="settings-ov" onclick="closeSheet('settings')"></div>
+<div class="sheet" id="settings-sheet">
+  <div class="shandle"></div>
+  <div class="stitle2"><span style="color:var(--ac);">Exam</span>Forge Settings</div>
+  <div class="ssub2">Credits & preferences</div>
+  <div class="sbody">
+    <div class="slabel" style="margin-top:0;">Your credits</div>
+    <div id="cr-display"></div>
+    <button class="buy-btn" onclick="closeSheet('settings');openPaywall()">⚡ Buy More Credits</button>
+    <div class="divider"></div>
+    <div class="slabel" style="margin-top:0;">Subjects</div>
+    <div style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 13px;font-size:12px;color:var(--tx2);line-height:1.6;">Long-press any subject chip on the main screen to rename it to your class name.</div>
+    <div class="divider"></div>
+    <div class="slabel" style="margin-top:0;">About</div>
+    <div class="sgrp">
+      <div class="srow"><span class="srow-lbl">Version</span><span class="srow-val">2.0.0</span></div>
+      <div class="srow"><span class="srow-lbl">Free exams</span><span class="srow-val">2 per device</span></div>
+      <div class="srow"><span class="srow-lbl">Storage</span><span class="srow-val">Local + Secure server</span></div>
+    </div>
+    <button class="dupcbtn" style="margin-top:10px;" onclick="closeSheet('settings')">Close</button>
+  </div>
+</div>
+
+<!-- SAVE SHEET -->
+<div class="overlay" id="save-ov" onclick="closeSheet('save')"></div>
+<div class="sheet" id="save-sheet">
+  <div class="shandle"></div><div class="stitle2">Save to Subject</div><div class="ssub2">Choose which subject this exam belongs to</div>
+  <div class="sbody"><div class="ssgrid" id="save-grid"></div><button class="sdone" onclick="confirmSave()">Save Exam</button><button class="dupcbtn" onclick="closeSheet('save')">Cancel</button></div>
+</div>
+
+<!-- DUP SHEET -->
+<div class="overlay" id="dup-ov" onclick="closeSheet('dup')"></div>
+<div class="sheet" id="dup-sheet">
+  <div class="shandle"></div>
+  <div class="sbody" style="padding-top:14px;"><div class="dupicon">📋</div><div class="duptitle">Already saved</div><div class="dupsub">An exam from this PDF exists in this subject. What would you like to do?</div><div class="dupcmp" id="dup-cmp"></div><button class="duprbtn" onclick="dupReplace()">Replace existing</button><button class="dupkbtn" onclick="dupKeep()">Keep both</button><button class="dupcbtn" onclick="closeSheet('dup')">Cancel</button></div>
+</div>
+
+<!-- DEL SHEET -->
+<div class="overlay" id="del-ov" onclick="closeSheet('del')"></div>
+<div class="sheet" id="del-sheet">
+  <div class="shandle"></div>
+  <div class="sbody" style="padding-top:14px;"><div class="dupicon">🗑️</div><div class="duptitle">Delete exam?</div><div class="dupsub">Permanently removed from your question bank.</div><div id="del-name" style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 13px;font-size:13px;font-weight:500;color:var(--tx);text-align:center;margin-bottom:16px;"></div><button class="duprbtn" onclick="confirmDel()">Delete</button><button class="dupcbtn" onclick="closeSheet('del')">Cancel</button></div>
+</div>
+
+<!-- RENAME SHEET -->
+<div class="overlay" id="rename-ov" onclick="closeSheet('rename')"></div>
+<div class="sheet" id="rename-sheet">
+  <div class="shandle"></div><div class="stitle2">Rename Subject</div>
+  <div class="sbody" style="padding-top:14px;"><input class="rename-input" type="text" id="rename-inp" placeholder="Subject name…" maxlength="20"><button class="sdone" onclick="confirmRename()">Save</button><button class="dupcbtn" onclick="closeSheet('rename')">Cancel</button></div>
+</div>
+
+<div id="_toast"></div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ════════════════════════════════════════
+//  CONFIG
+// ════════════════════════════════════════
+
+const BACKEND = 'https://c30h94fo08.preview.c38.airoapp.app'.replace(/\/$/, ''); // ← update after deploy; remove trailing slash
+// Save backend URL for payment-success page
+localStorage.setItem('ef4_backend_url', BACKEND);
+console.log('🔗 BACKEND URL:', BACKEND);
+const FREE_TOTAL = 2;
+const PAYPAL = {
+  starter:'https://www.paypal.com/ncp/payment/QSCW64U45CG22',
+  popular:'https://www.paypal.com/ncp/payment/AX42HB45M8AF8',
+  power:  'https://www.paypal.com/ncp/payment/F2L97M2G6AMGJ',
+};
+const PACKS = {
+  starter:{name:'Starter',price:5,exams:100},
+  popular:{name:'Popular',price:12,exams:300},
+  power:  {name:'Power',  price:20,exams:600},
+};
+const SUBJ_COLORS = ['#e8c97a','#6fcf97','#56b4d3','#eb5757','#bb86fc','#f0a05a'];
+const DEF_NAMES   = ['Engineering','Topik','English','PLC','Law','Korean Language'];
+
+// ════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════
+let ST = {
+  subjects:[], activeSubj:null,
+  pdf:null, pdfName:'',
+  exam:null, answers:{}, checked:false, mode:'study', expExp:false,
+  selectMode:false, selectedIds:new Set(),
+  bankFilter:'all',
+  saveTarget:null, dupPending:null, delPending:null, renameId:null,
+  selPack:'starter',
+  credits:0, freeLeft:FREE_TOTAL,
+  deviceFp:null,
+};
+const DB = {
+  get:(k,d)=>{try{const v=localStorage.getItem('ef4_'+k);return v!==null?JSON.parse(v):d;}catch{return d;}},
+  set:(k,v)=>{try{localStorage.setItem('ef4_'+k,JSON.stringify(v));}catch{}}
+};
+
+// ════════════════════════════════════════
+//  DEVICE FP
+// ════════════════════════════════════════
+function getDeviceFp(){
+  let fp=DB.get('fp',null);
+  if(!fp){fp='d_'+Date.now()+'_'+Math.random().toString(36).slice(2,10);DB.set('fp',fp);}
+  return fp;
+}
+
+// ════════════════════════════════════════
+//  BACKEND API
+// ════════════════════════════════════════
+async function api(path, body=null){
+  try{
+    const url = BACKEND + path;
+    console.log('📡 API Request:', url, body);
+    const opts = body ? {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)} : {};
+    const r = await fetch(url, opts);
+    const data = await r.json();
+    console.log('📡 API Response:', data);
+    return data;
+  }catch(e){ 
+    console.error('❌ API Error:', e.message);
+    return {ok:false,msg:'Cannot reach server. Check connection.'}; 
+  }
+}
+
+async function syncStatus(){
+  const d = await api('/api/status?fp='+encodeURIComponent(ST.deviceFp));
+  if(d.ok){
+    ST.credits  = d.credits;
+    ST.freeLeft = d.freeLeft;
+    DB.set('credits', ST.credits);
+    DB.set('freeLeft', ST.freeLeft);
+  } else {
+    ST.credits  = DB.get('credits',0);
+    ST.freeLeft = DB.get('freeLeft',FREE_TOTAL);
+  }
+  updateBadge();
+}
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+window.addEventListener('load', async ()=>{
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+  ST.deviceFp = getDeviceFp();
+  ST.subjects = DB.get('subjects', DEF_NAMES.map((n,i)=>({id:'s'+i,name:n,color:SUBJ_COLORS[i]})));
+  // Sync credits from server
+  await syncStatus();
+
+  document.getElementById('pdf-input').addEventListener('change', handleFile);
+  // Drag & drop
+  const uz = document.getElementById('upzone');
+  uz.addEventListener('dragover', e=>{e.preventDefault();uz.style.borderColor='var(--ac)';uz.style.background='var(--acb)';});
+  uz.addEventListener('dragleave', ()=>{uz.style.borderColor='';uz.style.background='';});
+  uz.addEventListener('drop', e=>{e.preventDefault();uz.style.borderColor='';uz.style.background='';const f=e.dataTransfer.files[0];if(f&&f.type==='application/pdf')loadPDF(f);});
+
+  const launched = DB.get('launched',false);
+  if(!launched){ showScr('onboard'); }
+  else { showScr('main'); renderSubjs(); }
+});
+
+// ════════════════════════════════════════
+//  CREDIT BADGE
+// ════════════════════════════════════════
+function updateBadge(){
+  const el=document.getElementById('cr-badge'); if(!el) return;
+  if(ST.freeLeft>0){
+    el.className='cr-badge free';
+    el.textContent= ST.freeLeft===FREE_TOTAL ? `🎁 ${FREE_TOTAL} free left` : `🎁 ${ST.freeLeft} free left`;
+  } else if(ST.credits>0){
+    el.className='cr-badge paid';
+    el.textContent=`⚡ ${ST.credits} credits`;
+  } else {
+    el.className='cr-badge empty';
+    el.textContent='⚠ No credits';
+  }
+}
+function updateSettingsCredits(){
+  const el=document.getElementById('cr-display'); if(!el) return;
+  if(ST.freeLeft>0){
+    el.innerHTML=`<div class="credits-box free"><div class="cr-num">${ST.freeLeft}</div><div><div class="cr-info-lbl">free exam${ST.freeLeft!==1?'s':''} remaining</div><div class="cr-info-sub">of ${FREE_TOTAL} free · no payment needed</div></div></div>`;
+  } else if(ST.credits>0){
+    el.innerHTML=`<div class="credits-box has"><div class="cr-num">${ST.credits}</div><div><div class="cr-info-lbl">credits remaining</div><div class="cr-info-sub">1 credit = 1 exam generated</div></div></div>`;
+  } else {
+    el.innerHTML=`<div class="credits-box none"><div class="cr-num">0</div><div><div class="cr-info-lbl">no credits</div><div class="cr-info-sub">Buy a pack below to continue</div></div></div>`;
+  }
+}
+function canGenerate(){ return ST.freeLeft>0 || ST.credits>0; }
+
+// ════════════════════════════════════════
+//  SCREENS & NAVIGATION
+// ════════════════════════════════════════
+function showScr(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('scr-'+n).classList.add('active');}
+function switchTab(t){showScr(t);if(t==='bank')renderBank();if(t==='main')renderSubjs();}
+function backToMain(){showScr('main');renderSubjs();}
+function startApp(){DB.set('launched',true);showScr('main');renderSubjs();}
+
+// ════════════════════════════════════════
+//  SUBJECTS
+// ════════════════════════════════════════
+function renderSubjs(){
+  const exams=DB.get('exams',[]);
+  document.getElementById('subj-grid').innerHTML=ST.subjects.map(s=>{
+    const cnt=exams.filter(e=>e.subjectId===s.id).length;
+    const act=s.id===ST.activeSubj;
+    return `<div class="sc ${act?'active':''}" style="--cc:${s.color}" id="sc_${s.id}" onclick="selSubj('${s.id}')" data-id="${s.id}">
+      <div class="sdot" style="background:${s.color}"></div>
+      <div class="slbl">${esc(s.name)}</div>
+      <div class="scnt">${cnt} exam${cnt!==1?'s':''}</div>
+    </div>`;
+  }).join('');
+  // Long-press to rename
+  let pt;
+  document.getElementById('subj-grid').querySelectorAll('.sc').forEach(chip=>{
+    chip.addEventListener('touchstart',()=>{pt=setTimeout(()=>startRename(chip.dataset.id),600);},{passive:true});
+    chip.addEventListener('touchend',()=>clearTimeout(pt),{passive:true});
+    chip.addEventListener('touchmove',()=>clearTimeout(pt),{passive:true});
+  });
+}
+function selSubj(id){ST.activeSubj=id;renderSubjs();hideErr();}
+function startRename(id){ST.renameId=id;const s=ST.subjects.find(x=>x.id===id);document.getElementById('rename-inp').value=s.name;openSheet('rename');}
+function confirmRename(){const v=document.getElementById('rename-inp').value.trim();if(!v)return;const s=ST.subjects.find(x=>x.id===ST.renameId);if(s){s.name=v;DB.set('subjects',ST.subjects);}closeSheet('rename');renderSubjs();}
+
+// ════════════════════════════════════════
+//  PDF
+// ════════════════════════════════════════
+function pickPDF(){document.getElementById('pdf-input').click();}
+function handleFile(e){const f=e.target.files?.[0];if(f) loadPDF(f);}
+function loadPDF(f){
+  if(f.type!=='application/pdf'){showErr('Please select a valid PDF file.');return;}
+  const r=new FileReader();
+  r.onload=ev=>{ST.pdf=new Uint8Array(ev.target.result);ST.pdfName=f.name;
+    document.getElementById('upzone').style.display='none';
+    document.getElementById('fbadge').style.display='flex';
+    document.getElementById('fname').textContent=f.name;
+    hideErr();};
+  r.readAsArrayBuffer(f);
+}
+function removeFile(){ST.pdf=null;ST.pdfName='';document.getElementById('pdf-input').value='';document.getElementById('upzone').style.display='';document.getElementById('fbadge').style.display='none';}
+async function extractText(data){
+  const pdf=await pdfjsLib.getDocument({data}).promise;
+  let t='';
+  for(let i=1;i<=Math.min(pdf.numPages,30);i++){
+    const pg=await pdf.getPage(i);
+    const ct=await pg.getTextContent();
+    t+=ct.items.map(x=>x.str).join(' ')+'\n';
+  }
+  return t.trim().slice(0,14000);
+}
+
+// ════════════════════════════════════════
+//  GENERATE
+// ════════════════════════════════════════
+async function generateExam(){
+  if(!ST.pdf){showErr('Please upload a PDF file first.');return;}
+  if(!ST.activeSubj){showErr('Please select a subject first.');return;}
+  // Sync credits first (always check server)
+  await syncStatus();
+  if(!canGenerate()){openPaywall();return;}
+
+  hideErr();setGen(true);
+  setGenSub('Reading PDF…');
+
+  try{
+    const pdfText=await extractText(ST.pdf);
+    if(pdfText.length<80) throw new Error('Could not extract text. Please use a text-based PDF (not scanned).');
+
+    const subj=ST.subjects.find(s=>s.id===ST.activeSubj);
+    setGenSub('Generating questions…');
+
+    const d = await api('/api/generate',{
+      deviceFp: ST.deviceFp,
+      pdfText,
+      subject: subj.name,
+      numQ:    document.getElementById('s-numq').value,
+      difficulty: document.getElementById('s-diff').value,
+      qType:   document.getElementById('s-type').value,
+      language: document.getElementById('s-lang').value,
+      withExp: document.getElementById('s-exp').value,
+    });
+
+    if(!d.ok){
+      if(d.needsPurchase){openPaywall();return;}
+      throw new Error(d.msg||'Generation failed. Please try again.');
+    }
+
+    // Update local credit state from server response
+    ST.credits  = d.credits;
+    ST.freeLeft = d.freeLeft;
+    DB.set('credits', ST.credits);
+    DB.set('freeLeft', ST.freeLeft);
+    updateBadge();
+
+    const exam = d.exam;
+    exam.pdfName   = ST.pdfName;
+    exam.generatedAt = new Date().toISOString();
+    exam.settings  = {
+      numQ:       document.getElementById('s-numq').value,
+      diff:       document.getElementById('s-diff').value,
+      type:       document.getElementById('s-type').value,
+      lang:       document.getElementById('s-lang').value,
+    };
+    exam.subjectId = ST.activeSubj;
+
+    ST.exam=exam; ST.answers={}; ST.checked=false; ST.mode='study';
+    showExam(exam);
+    setGenSub('Ready to generate');
+  }catch(err){
+    showErr('Error: '+err.message);
+    setGenSub('Ready to generate');
+  }finally{ setGen(false); }
+}
+
+// ════════════════════════════════════════
+//  PAYWALL
+// ════════════════════════════════════════
+function openPaywall(){showScr('paywall');selPack('starter');}
+function backToPaywall(){showScr('paywall');}
+function selPack(p){
+  ST.selPack=p;
+  ['starter','popular','power'].forEach(k=>{document.getElementById('pack-'+k)?.classList.toggle('sel',k===p);});
+  document.getElementById('pp-txt').textContent=`Pay $${PACKS[p].price} with PayPal`;
+}
+function doPayment(){
+  const wa=document.getElementById('wa-input').value.trim();
+  const ms=document.getElementById('wa-status');
+  if(!wa||wa.replace(/\D/g,'').length<7){ms.textContent='Please enter a valid WhatsApp number.';ms.className='mstatus err';return;}
+  
+  // Save payment info to localStorage for payment-success page
+  const pendingPayment = {whatsapp: wa, pack: ST.selPack, deviceFp: ST.deviceFp};
+  DB.set('pendingPayment', pendingPayment);
+  
+  // Show opening message
+  ms.textContent='Opening PayPal... Complete payment in the window.';
+  ms.className='mstatus';
+  
+  // Open PayPal
+  window.open(PAYPAL[ST.selPack],'_blank');
+  
+  // Show waiting message (order NOT saved yet)
+  setTimeout(() => {
+    ms.textContent='⏳ Waiting for payment confirmation from PayPal...';
+    ms.className='mstatus';
+  }, 500);
+}
+async function redeemCode(){
+  const raw=document.getElementById('code-input').value.trim().toUpperCase().replace(/\s/g,'');
+  const ms=document.getElementById('code-status');
+  if(!raw){ms.textContent='Please enter a code.';ms.className='mstatus err';return;}
+  ms.textContent='Checking code…';ms.className='mstatus';
+  const d=await api('/api/redeem',{code:raw,deviceFp:ST.deviceFp});
+  if(!d.ok){ms.textContent=d.msg||'Invalid code.';ms.className='mstatus err';return;}
+  ST.credits=d.credits; ST.freeLeft=d.freeLeft;
+  DB.set('credits',d.credits); DB.set('freeLeft',d.freeLeft);
+  updateBadge();
+  ms.textContent=`✓ ${d.added} credits added! You now have ${d.credits} credits.`;
+  ms.className='mstatus ok';
+  document.getElementById('code-input').value='';
+  showToast(`✓ ${d.added} credits added!`);
+  setTimeout(()=>{showScr('main');renderSubjs();},1400);
+}
+
+// ════════════════════════════════════════
+//  EXAM RENDER
+// ════════════════════════════════════════
+function showExam(exam){
+  const subj=ST.subjects.find(s=>s.id===exam.subjectId)||{};
+  document.getElementById('exam-subj-row').innerHTML=`<div class="esubj-dot" style="background:${subj.color||'var(--ac)'}"></div><span class="esubj-lbl" style="color:${subj.color||'var(--ac)'}">${esc(subj.name||'')}</span>`;
+  document.getElementById('exam-title').textContent=exam.title;
+  const dm={easy:'🟢 Easy',medium:'🟡 Medium',hard:'🔴 Hard',mixed:'🎲 Mixed'};
+  document.getElementById('exam-meta').innerHTML=`<span class="mtag ac">📋 ${exam.questions.length} Qs</span><span class="mtag">${dm[exam.settings?.diff]||''}</span><span class="mtag">🌐 ${esc(exam.settings?.lang||'')}</span><span class="mtag">📄 ${esc((exam.pdfName||'').slice(0,18))}</span>`;
+  document.getElementById('mode-study').classList.add('active');document.getElementById('mode-review').classList.remove('active');
+  document.getElementById('check-btn').disabled=false;document.getElementById('check-btn').style.display='';
+  document.getElementById('sc-badge').textContent='Not checked';document.getElementById('sc-badge').className='scbadge';
+  document.getElementById('score-summ').className='ssumm';document.getElementById('exam-toolbar').className='etoolbar';
+  document.getElementById('qlist').innerHTML=exam.questions.map((q,i)=>renderQ(q,i)).join('');
+  showScr('exam'); document.getElementById('exam-body').scrollTop=0;
+}
+function renderQ(q,i){
+  const tl={multiple_choice:'MC',true_false:'T/F',short_answer:'SA'}[q.type]||'?';
+  const tc={multiple_choice:'mc',true_false:'tf',short_answer:'sa'}[q.type]||'sa';
+  let inp='';
+  if(q.type==='multiple_choice'){
+    inp='<div class="mcopts">'+(q.options||[]).map(o=>{
+      const l=o.charAt(0).toUpperCase();
+      return `<div class="mcopt" id="opt_${i}_${l}" onclick="selMC(${i},'${l}')"><div class="mcltr">${l}</div><div class="mctxt">${esc(o.slice(2).trim())}</div><div class="mcic" id="mcic_${i}_${l}"></div></div>`;
+    }).join('')+'</div>';
+  } else if(q.type==='true_false'){
+    inp=`<div class="tfopts"><div class="tfopt" id="tf_${i}_True" onclick="selTF(${i},'True')">✓ True</div><div class="tfopt" id="tf_${i}_False" onclick="selTF(${i},'False')">✗ False</div></div>`;
+  } else {
+    inp=`<textarea class="sainput" id="sa_${i}" placeholder="Type your answer…" rows="3" oninput="ST.answers[${i}]=this.value"></textarea>`;
+  }
+  const expH=q.explanation?`<div class="expbox" id="exp_${i}"><div class="explbl">Explanation</div>${esc(q.explanation)}</div>`:'';
+  return `<div class="qcard" id="qc_${i}">
+    <div class="qhdr"><span class="qnum">Q${i+1}</span><span class="qtext">${esc(q.question)}</span><span class="qtag ${tc}">${tl}</span></div>
+    <div class="qbody">${inp}
+      <div class="fb" id="fb_${i}"><span class="fbic"></span><span class="fbbd"></span></div>
+      ${expH}
+      <div class="rvsec" id="rv_${i}"><button class="rvbtn" onclick="togRv(${i})">Show Answer</button>
+        <div class="ansbox" id="ans_${i}"><div class="anslbl">Answer</div>${esc(q.answer||'')}${q.explanation?`<div class="expbox vis" style="margin-top:6px;"><div class="explbl">Explanation</div>${esc(q.explanation)}</div>`:''}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+//  STUDY / CHECK / RETAKE
+// ════════════════════════════════════════
+function setMode(m){
+  ST.mode=m;ST.answers={};ST.checked=false;
+  document.getElementById('mode-study').classList.toggle('active',m==='study');
+  document.getElementById('mode-review').classList.toggle('active',m==='review');
+  document.getElementById('check-btn').style.display=m==='study'?'':'none';
+  document.getElementById('check-btn').disabled=false;
+  document.getElementById('sc-badge').textContent='Not checked';document.getElementById('sc-badge').className='scbadge';
+  document.getElementById('score-summ').className='ssumm';
+  document.getElementById('exam-toolbar').className=m==='review'?'etoolbar vis':'etoolbar';
+  const exam=ST.exam;if(!exam)return;
+  exam.questions.forEach((q,i)=>{
+    const fb=document.getElementById('fb_'+i);const rv=document.getElementById('rv_'+i);
+    const exp=document.getElementById('exp_'+i);const card=document.getElementById('qc_'+i);
+    if(fb)fb.className='fb';if(exp)exp.classList.remove('vis');if(card)card.className='qcard';
+    if(m==='review'){if(rv)rv.style.display='';}
+    else{if(rv)rv.style.display='none';const ans=document.getElementById('ans_'+i);if(ans)ans.classList.remove('vis');}
+    if(q.type==='multiple_choice'){
+      (q.options||[]).forEach(o=>{const l=o.charAt(0).toUpperCase();const el=document.getElementById('opt_'+i+'_'+l);if(el){el.className='mcopt';el.onclick=()=>selMC(i,l);}const ic=document.getElementById('mcic_'+i+'_'+l);if(ic)ic.textContent='';});
+    } else if(q.type==='true_false'){
+      ['True','False'].forEach(v=>{const el=document.getElementById('tf_'+i+'_'+v);if(el){el.className='tfopt';el.onclick=()=>selTF(i,v);}});
+    } else {const sa=document.getElementById('sa_'+i);if(sa){sa.disabled=false;sa.value='';sa.className='sainput';}}
+  });
+}
+function selMC(i,l){
+  if(ST.checked)return;ST.answers[i]=l;
+  (ST.exam.questions[i].options||[]).forEach(o=>{const el=document.getElementById('opt_'+i+'_'+o.charAt(0).toUpperCase());if(el)el.classList.remove('sel');});
+  const el=document.getElementById('opt_'+i+'_'+l);if(el)el.classList.add('sel');
+}
+function selTF(i,v){
+  if(ST.checked)return;ST.answers[i]=v;
+  ['True','False'].forEach(x=>{const el=document.getElementById('tf_'+i+'_'+x);if(el)el.classList.toggle('sel',x===v);});
+}
+function checkAnswers(){
+  if(!ST.exam)return;ST.checked=true;document.getElementById('check-btn').disabled=true;
+  let cor=0,mcTf=0;
+  ST.exam.questions.forEach((q,i)=>{
+    const card=document.getElementById('qc_'+i);
+    const fb=document.getElementById('fb_'+i);
+    const exp=document.getElementById('exp_'+i);
+    const ua=ST.answers[i];
+    if(q.type==='multiple_choice'){
+      mcTf++;const cl=(q.answer||'').trim().toUpperCase().charAt(0);
+      (q.options||[]).forEach(o=>{const l=o.charAt(0).toUpperCase();const el=document.getElementById('opt_'+i+'_'+l);if(!el)return;el.classList.add('disabled');el.onclick=null;if(l===cl)el.classList.add('rv');});
+      if(ua!==undefined){
+        const ul=String(ua).toUpperCase();const uel=document.getElementById('opt_'+i+'_'+ul);const uic=document.getElementById('mcic_'+i+'_'+ul);
+        if(ul===cl){cor++;if(uel){uel.classList.remove('sel','rv');uel.classList.add('ok');}if(uic)uic.textContent='✓';if(card)card.className='qcard cc';showFB(fb,'ok','✓ Correct!','');}
+        else{if(uel){uel.classList.remove('sel');uel.classList.add('bad');}if(uic)uic.textContent='✗';if(card)card.className='qcard cw';const ct=(q.options||[]).find(o=>o.charAt(0).toUpperCase()===cl)||cl;showFB(fb,'bad','✗ Wrong. ',`Correct: <strong>${esc(ct)}</strong>`);}
+      }else{if(card)card.className='qcard cw';const ct=(q.options||[]).find(o=>o.charAt(0).toUpperCase()===cl)||cl;showFB(fb,'bad','— Not answered. ',`Correct: <strong>${esc(ct)}</strong>`);}
+    } else if(q.type==='true_false'){
+      mcTf++;const cv=(q.answer||'').trim();
+      ['True','False'].forEach(v=>{const el=document.getElementById('tf_'+i+'_'+v);if(!el)return;el.classList.add('disabled');el.onclick=null;if(v===cv)el.classList.add('rv');});
+      if(ua!==undefined){
+        const uel=document.getElementById('tf_'+i+'_'+ua);
+        if(ua===cv){cor++;if(uel){uel.classList.remove('sel','rv');uel.classList.add('ok');}if(card)card.className='qcard cc';showFB(fb,'ok','✓ Correct!','');}
+        else{if(uel){uel.classList.remove('sel');uel.classList.add('bad');}if(card)card.className='qcard cw';showFB(fb,'bad','✗ Wrong. ',`Correct: <strong>${esc(cv)}</strong>`);}
+      }else{if(card)card.className='qcard cw';showFB(fb,'bad','— Not answered. ',`Correct: <strong>${esc((q.answer||'').trim())}</strong>`);}
+    } else {
+      const sa=document.getElementById('sa_'+i);if(sa)sa.disabled=true;
+      showFB(fb,'ok','Model answer: ',`<strong>${esc(q.answer||'')}</strong>`);
+      if(card)card.className='qcard cc';
+    }
+    if(exp)exp.classList.add('vis');
+  });
+  const pct=mcTf>0?Math.round(cor/mcTf*100):null;
+  const saC=ST.exam.questions.length-mcTf;
+  // Show score
+  const el=document.getElementById('score-summ');
+  const pass=pct===null?true:pct>=60;
+  el.className='ssumm vis '+(pass?'pass':'fail');
+  document.getElementById('sc-circle').textContent=pct!==null?pct+'%':'SA';
+  document.getElementById('sc-title').textContent=pct===null?'📝 Self-check':pct>=80?'🎉 Excellent! '+pct+'%':pct>=60?'👍 Good — '+pct+'%':'📚 Keep studying — '+pct+'%';
+  document.getElementById('sc-detail').textContent=(mcTf>0?`${cor}/${mcTf} correct`:'')+( saC>0?` · ${saC} short answer — self-check`:'');
+  document.getElementById('sc-fill').style.cssText=`width:${pct||100}%;background:${pass?'var(--gn)':'var(--rd)'}`;
+  const sb=document.getElementById('sc-badge');
+  if(pct!==null){sb.textContent=`${cor}/${mcTf} · ${pct}%`;sb.className='scbadge '+(pass?'good':'bad');}else{sb.textContent='Self-check';sb.className='scbadge';}
+}
+function showFB(el,type,pre,html){el.className='fb vis '+type;el.querySelector('.fbic').textContent=type==='ok'?'✓':'✗';el.querySelector('.fbbd').innerHTML=`<strong>${pre}</strong>${html}`;}
+function retake(){if(!ST.exam)return;ST.exam={...ST.exam,questions:[...ST.exam.questions].sort(()=>Math.random()-.5)};ST.answers={};ST.checked=false;ST.mode='study';showExam(ST.exam);}
+function togRv(i){const b=document.getElementById('ans_'+i);const bt=b.previousElementSibling;const v=b.classList.toggle('vis');bt.textContent=v?'Hide Answer':'Show Answer';}
+function revealAll(){document.querySelectorAll('.ansbox').forEach(b=>{b.classList.add('vis');if(b.previousElementSibling)b.previousElementSibling.textContent='Hide Answer';});document.querySelectorAll('.expbox').forEach(b=>b.classList.add('vis'));}
+function hideAll(){document.querySelectorAll('.ansbox').forEach(b=>{b.classList.remove('vis');if(b.previousElementSibling)b.previousElementSibling.textContent='Show Answer';});}
+function toggleExp(){ST.expExp=!ST.expExp;document.querySelectorAll('.expbox').forEach(b=>b.classList.toggle('vis',ST.expExp));}
+
+// ════════════════════════════════════════
+//  SAVE / DUP
+// ════════════════════════════════════════
+function openSaveModal(){if(!ST.exam){showToast('No exam to save');return;}ST.saveTarget=ST.activeSubj||ST.subjects[0]?.id;renderSaveGrid();openSheet('save');}
+function renderSaveGrid(){
+  const exams=DB.get('exams',[]);
+  document.getElementById('save-grid').innerHTML=ST.subjects.map(s=>{
+    const cnt=exams.filter(e=>e.subjectId===s.id).length;
+    const sel=s.id===ST.saveTarget;
+    return `<div class="ssbtn ${sel?'sel':''}" style="--cc:${s.color}" onclick="selSaveSubj('${s.id}')"><div class="ssname"><div class="ssdot" style="background:${s.color}"></div>${esc(s.name)}</div><div class="sscnt">${cnt} exam${cnt!==1?'s':''}</div></div>`;
+  }).join('');
+}
+function selSaveSubj(id){ST.saveTarget=id;renderSaveGrid();}
+function confirmSave(){closeSheet('save');if(!ST.exam||!ST.saveTarget)return;doSave(ST.exam,ST.saveTarget);}
+function doSave(exam,sid,forceReplace=false,existId=null){
+  let exams=DB.get('exams',[]);
+  if(!forceReplace){const dup=exams.find(e=>e.subjectId===sid&&e.pdfName===exam.pdfName);if(dup){ST.dupPending={exam,sid,existId:dup.id};showDup(dup,exam);return;}}
+  if(forceReplace&&existId) exams=exams.filter(e=>e.id!==existId);
+  exams.unshift({...exam,id:Date.now(),subjectId:sid,savedAt:new Date().toISOString()});
+  DB.set('exams',exams);renderSubjs();showToast('Saved to '+ST.subjects.find(s=>s.id===sid)?.name+' ✓');
+}
+function showDup(ex,nw){document.getElementById('dup-cmp').innerHTML=`<div class="dupcard ex"><div class="duplbl">Existing</div><div class="dupname">${esc(ex.title||'Untitled')}</div><div class="dupmeta">${ex.questions?.length||0} Qs · ${fmtDate(ex.savedAt)}</div></div><div class="dupcard nw"><div class="duplbl">New</div><div class="dupname">${esc(nw.title||'Untitled')}</div><div class="dupmeta">${nw.questions?.length||0} Qs · now</div></div>`;openSheet('dup');}
+function dupReplace(){closeSheet('dup');if(!ST.dupPending)return;doSave(ST.dupPending.exam,ST.dupPending.sid,true,ST.dupPending.existId);ST.dupPending=null;}
+function dupKeep(){closeSheet('dup');if(!ST.dupPending)return;const exams=DB.get('exams',[]);exams.unshift({...ST.dupPending.exam,id:Date.now(),subjectId:ST.dupPending.sid,savedAt:new Date().toISOString()});DB.set('exams',exams);renderSubjs();showToast('Saved — both kept ✓');ST.dupPending=null;}
+
+// ════════════════════════════════════════
+//  BANK
+// ════════════════════════════════════════
+function renderBank(){
+  const all=DB.get('exams',[]);
+  document.getElementById('bank-sub').textContent=all.length+' exam'+(all.length!==1?'s':', swipe to delete');
+  document.getElementById('bank-filter').innerHTML=
+    `<span class="bpill ${ST.bankFilter==='all'?'active':''}" style="${ST.bankFilter==='all'?'color:var(--ac);border-color:rgba(232,201,122,.4);background:var(--acb);':''}" onclick="setBF('all')">All</span>`+
+    ST.subjects.map(s=>{const a=ST.bankFilter===s.id;return `<span class="bpill ${a?'active':''}" style="${a?`color:${s.color};border-color:${s.color}22;background:${s.color}18`:''}" onclick="setBF('${s.id}')">${esc(s.name)}</span>`;}).join('');
+  const fil=ST.bankFilter==='all'?all:all.filter(e=>e.subjectId===ST.bankFilter);
+  const list=document.getElementById('bank-list');
+  if(!fil.length){list.innerHTML='<div class="emptystate"><div class="emptyicon">📭</div><div class="emptytitle">No exams saved yet</div><div class="emptysub">Generate an exam and tap the 💾 save button — it will appear here.</div></div>';return;}
+  const grp={};
+  fil.forEach(e=>{if(!grp[e.subjectId])grp[e.subjectId]=[];grp[e.subjectId].push(e);});
+  list.innerHTML=Object.entries(grp).map(([sid,exams])=>{
+    const s=ST.subjects.find(x=>x.id===sid)||{name:'Unknown',color:'#888'};
+    const items=exams.map(e=>{
+      if(ST.selectMode){
+        const chk=ST.selectedIds.has(String(e.id));
+        return `<div class="bitem" style="border-left-color:${s.color};display:flex;align-items:center;gap:8px;" onclick="togSel('${e.id}')"><div class="bichk ${chk?'checked':''}" id="chk_${e.id}"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><div style="flex:1;min-width:0;"><div class="bititle">${esc(e.title||'Untitled')}</div><div class="bimeta"><span>📋${e.questions?.length||0}</span><span>📅${fmtDate(e.savedAt||e.generatedAt)}</span></div></div></div>`;
+      }
+      return `<div class="biwrap" id="bw_${e.id}">
+        <div class="bidelbg" onclick="showDel(event,'${e.id}')"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></div>
+        <div class="bitem" id="bi_${e.id}" style="border-left-color:${s.color}" onclick="biClick('${e.id}')" ontouchstart="bts(event,'${e.id}')" ontouchmove="btm(event,'${e.id}')">
+          <div class="bititle">${esc(e.title||'Untitled')}</div>
+          <div class="bimeta"><span>📋${e.questions?.length||0} Qs</span><span>📅${fmtDate(e.savedAt||e.generatedAt)}</span>
+            <div class="bidelin" onclick="showDel(event,'${e.id}')"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="bsec"><div class="bshdr"><div class="bsdot" style="background:${s.color}"></div><div class="bsname">${esc(s.name)}</div><div class="bscnt">${exams.length}</div></div>${items}</div>`;
+  }).join('');
+}
+function setBF(id){ST.bankFilter=id;renderBank();}
+const _sw={};
+function bts(e,id){_sw[id]={x:e.touches[0].clientX};}
+function btm(e,id){if(!_sw[id])return;const dx=e.touches[0].clientX-_sw[id].x;const el=document.getElementById('bi_'+id);if(!el)return;if(dx<-20)el.classList.add('swiped');else if(dx>10)el.classList.remove('swiped');}
+function biClick(id){const el=document.getElementById('bi_'+id);if(el?.classList.contains('swiped')){el.classList.remove('swiped');return;}const exam=DB.get('exams',[]).find(e=>String(e.id)===String(id));if(!exam)return;ST.exam=exam;ST.activeSubj=exam.subjectId;ST.answers={};ST.checked=false;ST.mode='study';renderSubjs();showExam(exam);}
+function showDel(e,id){e.stopPropagation();ST.delPending=id;const exam=DB.get('exams',[]).find(x=>String(x.id)===String(id));document.getElementById('del-name').textContent=exam?.title||'Untitled';openSheet('del');}
+function confirmDel(){if(!ST.delPending)return;closeSheet('del');const el=document.getElementById('bi_'+ST.delPending);if(el){el.classList.add('deleting');setTimeout(()=>{DB.set('exams',DB.get('exams',[]).filter(e=>String(e.id)!==String(ST.delPending)));ST.delPending=null;renderBank();renderSubjs();},240);}else{DB.set('exams',DB.get('exams',[]).filter(e=>String(e.id)!==String(ST.delPending)));ST.delPending=null;renderBank();renderSubjs();}}
+function toggleSelect(){ST.selectMode=!ST.selectMode;ST.selectedIds.clear();document.getElementById('sel-bar').classList.toggle('vis',ST.selectMode);document.getElementById('sel-cnt').textContent='0 selected';renderBank();}
+function cancelSelect(){ST.selectMode=false;ST.selectedIds.clear();document.getElementById('sel-bar').classList.remove('vis');renderBank();}
+function togSel(id){const sid=String(id);if(ST.selectedIds.has(sid))ST.selectedIds.delete(sid);else ST.selectedIds.add(sid);document.getElementById('sel-cnt').textContent=ST.selectedIds.size+' selected';const chk=document.getElementById('chk_'+id);if(chk)chk.classList.toggle('checked',ST.selectedIds.has(sid));}
+function deleteSelected(){if(!ST.selectedIds.size)return;if(!confirm(`Delete ${ST.selectedIds.size} exam${ST.selectedIds.size>1?'s':''}?`))return;DB.set('exams',DB.get('exams',[]).filter(e=>!ST.selectedIds.has(String(e.id))));ST.selectMode=false;ST.selectedIds.clear();document.getElementById('sel-bar').classList.remove('vis');renderBank();renderSubjs();}
+
+// ════════════════════════════════════════
+//  SETTINGS
+// ════════════════════════════════════════
+function openSettings(){updateSettingsCredits();openSheet('settings');}
+function closeSettings(){closeSheet('settings');}
+
+// ════════════════════════════════════════
+//  EXPORT
+// ════════════════════════════════════════
+function exportExam(){
+  if(!ST.exam)return;
+  const s=ST.subjects.find(x=>x.id===ST.exam.subjectId)||{};
+  let t=`Subject: ${s.name||'?'}\n${ST.exam.title}\n${'='.repeat(Math.min((ST.exam.title||'').length,60))}\n\nGenerated: ${fmtDate(ST.exam.generatedAt)} | File: ${ST.exam.pdfName}\n\n`;
+  ST.exam.questions.forEach((q,i)=>{t+=`Q${i+1}. [${(q.type||'').replace('_',' ').toUpperCase()}] ${q.question}\n`;if(q.options?.length)q.options.forEach(o=>t+=`   ${o}\n`);t+=`Answer: ${q.answer}\n`;if(q.explanation)t+=`Explanation: ${q.explanation}\n`;t+='\n';});
+  const b=new Blob([t],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=((s.name||'exam')+'_'+(ST.exam.title||'exam')).replace(/[^a-z0-9]/gi,'_').slice(0,60)+'.txt';a.click();URL.revokeObjectURL(a.href);
+}
+
+// ════════════════════════════════════════
+//  SHEET HELPERS
+// ════════════════════════════════════════
+function openSheet(n){document.getElementById(n+'-ov').classList.add('vis');document.getElementById(n+'-sheet').classList.add('vis');}
+function closeSheet(n){document.getElementById(n+'-ov').classList.remove('vis');document.getElementById(n+'-sheet').classList.remove('vis');}
+
+// ════════════════════════════════════════
+//  UI HELPERS
+// ════════════════════════════════════════
+function showErr(m){const el=document.getElementById('main-err');el.textContent='⚠ '+m;el.classList.add('vis');}
+function hideErr(){document.getElementById('main-err').classList.remove('vis');}
+function setGen(on){const btn=document.getElementById('gen-btn');btn.disabled=on;document.getElementById('gen-icon').innerHTML=on?'<div class="spin"></div>':'✨';document.getElementById('gen-txt').textContent=on?'Generating…':'Generate Exam';}
+function setGenSub(t){document.getElementById('main-sub').textContent=t;}
+let _tt;
+function showToast(m){const t=document.getElementById('_toast');t.textContent=m;t.style.opacity='1';clearTimeout(_tt);_tt=setTimeout(()=>t.style.opacity='0',2300);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtDate(iso){if(!iso)return'';try{return new Date(iso).toLocaleDateString();}catch{return'';}}
+</script>
+</body>
+</html>
